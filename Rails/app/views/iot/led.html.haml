@@ -1,0 +1,108 @@
+/ IoT Websocket
+
+.ui.centered.grid
+  .ten.wide.column
+    #risk-assessment.ui.form.panel
+      #control-panel.ui.attached.top.inverted.segment
+        .ui.header LED CONTROL PANEL
+      .ui.segment.attached
+        %form.ui.form#server-control
+          .three.fields
+            .field
+              %label HOST
+              .ui.labeled.input
+                .ui.label ws://   
+                %input.param{type:"text", name:"host", value: "192.168.1.252"}
+            .field
+              %label PORT
+              %input.param{type:"number", name:"port", value: 3001}
+            .field
+              %label &nbsp;
+              %button.ui.button.fluid{type:"submit"}
+                CONNECT
+      .ui.segment.attached.bottom
+        .two.fields.api
+          .field
+            %label numOfBlinks
+            .ui.action.input
+              %input.param{type:"number", name:"numOfBlinks", value: 5}
+          .field
+            %label Delay Time
+            .ui.action.input
+              %input.param{type:"number", name:"delayTime", value: 1000}
+              %button.ui.button{data: {command: "B"}}
+                BLINK
+        .field.api
+          %label Fade Delay
+          .ui.action.input
+            %input.param{type:"number", name:"delayTime", value: 30}
+            %button.ui.button{data: {command: "F"}}
+              FADE
+        .ui.large.buttons
+          %button.ui.button.api{data: {command: "L"}}
+            ON
+          .or
+          %button.ui.button.api{data: {command: "O"}}
+            OFF
+          
+            
+
+          
+:coffeescript
+  $ -> 
+    host = "192.168.1.252" # WEBSOCKET SERVER IP ADDRESS
+    port = "3001"   # WEBSOCKET SERVER PORT 
+
+    $("#server-control").on "submit", (event)->
+      sa = $(this).serializeArray()
+      data = _.map sa, (element)-> [element.name, element.value]
+      data = _.object(data)
+      start_socket(data.host, data.port)
+      event.preventDefault();
+
+    
+
+  start_socket = (host, port)->
+    url = 'ws://'+ host+':' + port
+    socket = new WebSocket(url)
+    
+    socket.onopen = (event)->
+      $("#control-panel").addClass('green').removeClass('red')
+      message = 
+          name: "web_client"
+          version: "1.0"
+          event: "connected"
+      socket.send JSON.stringify(message)
+
+    socket.onclose = (event)->
+      $("#control-panel").addClass('red').removeClass('green')
+      # ATTEMPT RECONNECTION EVERY 5000 ms
+      _.delay (()-> start_socket(host, port)), 5000
+
+    socket.onmessage = (event)->
+      console.log("Client << ", event.data)
+
+    socket.onerror = (event)->
+      console.log("Client << ", event)
+      alertify.error("<b>Error</b><p>Could not contact socket server at "+url+"</p>")
+
+    $("button").click (event)->
+      if command = $(this).data("command")
+        message = 
+          name: "web_client"
+          version: "1.0"
+          api: 
+            command: command 
+            params: {}
+        if params = $(this).parents('.api').find('.param')
+          _.each params, (p)->
+            message.api.params[$(p).attr('name')] = $(p).val()
+      if socket.readyState == socket.OPEN
+        socket.send JSON.stringify message
+        
+    return
+
+:scss
+  .panel{
+    margin-top: 60px;
+  }
