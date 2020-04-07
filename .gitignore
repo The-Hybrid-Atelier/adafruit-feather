@@ -1,3 +1,4 @@
+arduino_secrets.h
 *.rbc
 capybara-*.html
 .rspec
