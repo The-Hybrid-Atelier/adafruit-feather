@@ -10,6 +10,7 @@
 #include <ArduinoHttpClient.h>
 #include <WiFi101.h>
 #include <ArduinoJson.h>
+#include "arduino_secrets.h"
 
 #define SERVER_ADDRESS "192.168.1.252"
 #define SERVER_PORT 3001
