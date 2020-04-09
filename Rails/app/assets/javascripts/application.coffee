@@ -4,3 +4,4 @@
 //= require alertify
 //= require underscore
 //= require semantic-ui
+//= require smoothie
