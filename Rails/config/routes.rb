@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
-  root "iot#led"
+  root "iot#video"
   get 'iot/led'
+  get 'iot/video'
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".

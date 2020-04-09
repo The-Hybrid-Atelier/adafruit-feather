@@ -6,7 +6,7 @@ EventMachine.run do
   
   
   # START JSON WEBSOCKET SERVER
-  ip= "192.168.1.252" # DO NOT USE LOCALHOST, BIND TO LOCAL IP
+  ip= "192.168.1.29" # DO NOT USE LOCALHOST, BIND TO LOCAL IP
   port = 3001
 
   EM::WebSocket.start(:host => ip, :port => port) do |ws|

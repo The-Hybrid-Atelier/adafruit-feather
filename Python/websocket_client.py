@@ -7,7 +7,7 @@ import websockets
 parser = argparse.ArgumentParser()
 parser.add_argument('-ip', help='IP Address of Feather')
 parser.add_argument('-p', help='Port of Feather Comm')
-parser.add_argument('-c', help='Command to send to Feather')
+# parser.add_argument('-c', help='Command to send to Feather')
 args = parser.parse_args()
 
 
@@ -15,6 +15,12 @@ HOST = args.ip
 # HOST = '192.168.1.251'  # Cesar Home Network# The server's hostname or IP address
 # HOST = '192.168.1.?'    # The Hybrid Atelier Network
 PORT = int(args.p)       # The port used by the server: Telnet (23)
+
+
+def binary_classifier(array):
+  
+
+
 
 # WS client example
 async def message_handling():
@@ -28,7 +34,8 @@ async def message_handling():
     try:
       message = json.loads(message)
       print(f"Client < {message}")
-      # TODO
+      if message.data:
+        binary_classifier(message.data)
       print("DOING SOMETHING WITH MESSAGE")
     except Exception as e:
       print("Invalid JSON")
