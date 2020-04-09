@@ -3,4 +3,6 @@ class IotController < ApplicationController
   end
   def video
   end
+  def audio
+  end
 end

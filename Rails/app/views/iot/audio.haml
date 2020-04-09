@@ -1,0 +1,130 @@
+/ IoT Websocket
+
+.ui.centered.grid
+  .ten.wide.column
+    #risk-assessment.ui.form.panel
+      #control-panel.ui.attached.top.inverted.segment.socket-state
+        .ui.header AUDIO CONTROL PANEL
+      .ui.segment.attached
+        %canvas#audio-canvas{height: 100}
+      .ui.segment.attached
+        %form.ui.form#server-control
+          .three.fields
+            .field
+              %label HOST
+              .ui.labeled.input
+                .ui.label ws://   
+                %input.param{type:"text", name:"host", value: "192.168.1.252"}
+            .field
+              %label PORT
+              %input.param{type:"number", name:"port", value: 3001}
+            .field
+              %label &nbsp;
+              %button.ui.button.fluid.socket-state{type:"submit"}
+                CONNECT
+      .ui.segment.attached.bottom
+        .ui.large.buttons
+          %button.ui.button.api{data: {command: "O"}}
+            CAPTURE_ON
+          .or
+          %button.ui.button.api{data: {command: "F"}}
+            CAPTURE_OFF
+          
+            
+
+          
+:coffeescript
+  $ -> 
+    audioCanvas = $('#audio-canvas').attr('width', $('#audio-canvas').parent().width())
+    smoothie = new SmoothieChart();
+    smoothie.streamTo(audioCanvas[0]);
+    window.line1 = new TimeSeries
+    window.line2 = new TimeSeries
+    
+    
+
+    smoothie.addTimeSeries line1, 
+      strokeStyle:'rgb(0, 255, 0)'
+      fillStyle:'rgba(0, 255, 0, 0.4)'
+      lineWidth: 1
+
+    smoothie.addTimeSeries line2, 
+      strokeStyle:'rgb(0, 0, 255)'
+      fillStyle:'rgba(0, 0, 255, 0.4)'
+      lineWidth: 1
+
+
+    host = "192.168.1.252" # WEBSOCKET SERVER IP ADDRESS
+    port = "3001"   # WEBSOCKET SERVER PORT 
+
+    $("#server-control").on "submit", (event)->
+      sa = $(this).serializeArray()
+      data = _.map sa, (element)-> [element.name, element.value]
+      data = _.object(data)
+      start_socket(data.host, data.port)
+      event.preventDefault();
+
+    
+
+  start_socket = (host, port)->
+    url = 'ws://'+ host+':' + port
+    socket = new WebSocket(url)
+    
+    socket.onopen = (event)->
+      $(".socket-state").addClass('green').removeClass('red')
+      message = 
+          name: "web_client"
+          version: "1.0"
+          event: "connected"
+      socket.send JSON.stringify(message)
+
+    socket.onclose = (event)->
+      $(".socket-state").addClass('red').removeClass('green')
+      # ATTEMPT RECONNECTION EVERY 5000 ms
+      _.delay (()-> start_socket(host, port)), 5000
+
+    socket.onmessage = (event)->
+      console.log("Client << ", event.data)
+
+      stream = JSON.parse(event.data)
+
+      if stream.sensor == "mic"
+        t_0 = stream.time
+
+        sum = _.reduce stream.data, ((memo, num) ->
+          memo + num
+        ), 0
+        avg = sum / stream.data.length
+        if avg > 600
+          window.line2.append (new Date).getTime(), 800 
+        else
+          window.line2.append (new Date).getTime(), 400 
+        _.each stream.data, (d, i)->
+          window.line1.append((new Date).getTime(), d)
+        
+
+
+    socket.onerror = (event)->
+      console.log("Client << ", event)
+      alertify.error("<b>Error</b><p>Could not contact socket server at "+url+"</p>")
+
+    $("button").click (event)->
+      if command = $(this).data("command")
+        message = 
+          name: "web_client"
+          version: "1.0"
+          api: 
+            command: command 
+            params: {}
+        if params = $(this).parents('.api').find('.param')
+          _.each params, (p)->
+            message.api.params[$(p).attr('name')] = $(p).val()
+      if socket.readyState == socket.OPEN
+        socket.send JSON.stringify message
+        
+    return
+
+:scss
+  .panel{
+    margin-top: 60px;
+  }
