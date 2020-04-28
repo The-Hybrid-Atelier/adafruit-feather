@@ -12,7 +12,7 @@
 #include <ArduinoJson.h>
 #include "arduino_secrets.h"
 
-#define SERVER_ADDRESS "192.168.1.252"
+#define SERVER_ADDRESS "192.168.1.5"
 #define SERVER_PORT 3001
 
 /* MIC_API
@@ -91,12 +91,13 @@ void end_capture(){
 }
 void capture(){
   mic_response["sensor"] = "mic";
-  mic_response["time"] = millis();
+  mic_response["start_time"] = millis();
   JsonArray data = mic_response.createNestedArray("data");
   Serial.println(JSON_ARRAY_SIZE(DATA_SIZE) + JSON_OBJECT_SIZE(3));
   for(int i = 0; i< DATA_SIZE; i++){
     data.add(analogRead(MIC_PIN));
   }
+  mic_response["end_time"] = millis();
   client.beginMessage(TYPE_TEXT);
   serializeJson(mic_response, client);
   client.endMessage();
@@ -107,11 +108,11 @@ void capture(){
 // API REGISTRATION
 void apiCall(char prefix, JsonObject obj){
   switch(prefix){
-    case 'O': 
+    case 'R':
       Serial.write("MIC_CAPTURE ON\n");
       start_capture();
       break;
-    case 'F': 
+    case 'S':
       Serial.write("MIC_CAPTURE OFF\n");
       end_capture();
       break;
